@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  height: 100vh;
+  background-image: url(/src/background.png);
+  background-repeat: repeat;
+  background-color: #234b97;
+}
+
+#root {
+  height: 100%;
+}
