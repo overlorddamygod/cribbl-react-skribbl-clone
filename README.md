@@ -1,6 +1,6 @@
 # Cribbl - Drawing Game
 
-[Skribbl.io](skribbl.io/) clone with Javascript <3
+[Skribbl.io](skribbl.io/) clone with TypeScript <3
 
 ## FrontEnd Stack ( /cribbl-client )
 
