@@ -95,6 +95,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // client.broadcast.emit('lol');
     this.gameService.drawing(gameId, client, data);
   }
+  @SubscribeMessage('game:fill')
+  fill(@ConnectedSocket() client: Socket, @MessageBody() data: any): any {
+    const gameId = data.pop();
+    // client.broadcast.emot
+    // client.broadcast.emit('lol');
+    this.gameService.fill(gameId, client, data);
+  }
   @SubscribeMessage('game:clear')
   clearCanvas(
     @ConnectedSocket() client: Socket,

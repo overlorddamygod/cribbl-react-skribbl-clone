@@ -33,6 +33,10 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
         drawLine(...data, false);
       }
     );
+    io.on("game:fill", (data: [number, number, string]) => {
+      console.log(data);
+      fill(...data);
+    });
     io.on("game:clear", () => {
       clearCanvas(false);
     });
@@ -43,6 +47,8 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
     return () => {};
   }, []);
 
+  console.log("WHITEBOARD");
+
   const clearCanvas = (emit = true) => {
     const ctx = canvasRef.current!.getContext("2d")!;
     ctx.fillStyle = "#fff";
@@ -52,6 +58,8 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
 
   const onMouseDown: MouseEventHandler = (e) => {
     if (canvasState.mode == "fill") return;
+    console.log("DOWN");
+
     const x = e.clientX - canvasRef.current!.getBoundingClientRect().x;
     const y = e.clientY - canvasRef.current!.getBoundingClientRect().y;
 
@@ -67,9 +75,10 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
   };
 
   const onMouseMove: MouseEventHandler = (e) => {
-    if (!canvasState.drawing) {
+    if (!canvasState.drawing || canvasState.mode == "fill") {
       return;
     }
+    console.log("MOVE");
 
     const x = e.clientX - canvasRef.current!.getBoundingClientRect().x;
     const y = e.clientY - canvasRef.current!.getBoundingClientRect().y;
@@ -93,9 +102,10 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
   };
 
   const onMouseUp: MouseEventHandler = (e) => {
-    if (!canvasState.drawing) {
+    if (!canvasState.drawing || canvasState.mode == "fill") {
       return;
     }
+    console.log("UP");
     setCanvasState({
       ...canvasState,
       drawing: false,
@@ -158,18 +168,28 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
 
   const onClick: MouseEventHandler = (e) => {
     if (canvasState.mode == "fill") {
-      console.log("START");
       const x = e.clientX - canvasRef.current!.getBoundingClientRect().x;
       const y = e.clientY - canvasRef.current!.getBoundingClientRect().y;
-      //   console.log(x, y);
+      console.log("FILL");
+      fill(x, y, canvasState.current.color);
+      io.emit("game:fill", [x, y, canvasState.current.color, gameId]);
+    }
+  };
 
-      const ctx = canvasRef.current!.getContext("2d")!;
-      const imageData = ctx.getImageData(0, 0, 700, 500);
+  const fill = (x: number, y: number, color: string) => {
+    const ctx = canvasRef.current!.getContext("2d")!;
+    console.log("CONTEXT", ctx);
+    if (ctx) {
+      const imageData = ctx.getImageData(
+        0,
+        0,
+        canvasRef.current?.width || 700,
+        canvasRef.current?.height || 500
+      );
 
-      const col = hexToRGB(canvasState.current.color);
+      const col = hexToRGB(color);
       floodFill(imageData, col, x, y);
       ctx.putImageData(imageData, 0, 0);
-      console.log("END");
     }
   };
   const words = ["Wizard", "Hat", "Car"];

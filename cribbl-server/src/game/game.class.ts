@@ -36,6 +36,8 @@ class Game {
     // this.totalRounds = 3
     this.players = [];
     this.screen = Screen.lobby;
+    this.log(`Game Created`);
+
     // this.correctWord = ''
     // this.turnOf = {}
     // this.time = ''
@@ -65,6 +67,8 @@ class Game {
 
   addPlayer(player: Player, client: Socket, broadcast = true) {
     client.join(this.roomId);
+    this.log(`Player joined ${player.username} (${player.id})`);
+
     // player.guessed = false;
     player.points = 0;
     player.rank = 1;
@@ -75,7 +79,6 @@ class Game {
     // console.log(player);
     this.players.push(player);
     if (broadcast) {
-      console.log(`${player.username} joined the game`);
       client.broadcast.in(this.roomId).emit('game:joined', player);
       client.emit('game:state', this.getDetails());
     }
@@ -88,7 +91,7 @@ class Game {
     // console.log(player);
     this.players = this.players.filter((player) => player.id != playerId);
 
-    console.log(`${playerId} closed the game`);
+    this.log(`${playerId} closed the game`);
     this.io.in(this.roomId).emit('game:disconnected', playerId);
   }
 
@@ -117,7 +120,7 @@ class Game {
   // }
 
   startGame() {
-    console.log('Game started....');
+    this.log(`Game Started`);
     // this.changeTurn()
     this.screen = Screen.game;
     this.emit('game:started', '');
@@ -126,9 +129,18 @@ class Game {
   drawing(data: any[], client: Socket) {
     client.broadcast.in(this.roomId).emit('game:draw', data);
   }
+  fill(data: any[], client: Socket) {
+    this.log(`Fill canvas ${data}`);
+    client.broadcast.in(this.roomId).emit('game:fill', data);
+  }
 
   clearCanvas() {
+    this.log('Clear Canvas');
     this.emit('game:clear', '');
+  }
+
+  log(message: string) {
+    console.log(` Game [${this.roomId}]: ${message}`);
   }
 
   // this.changeTurn = () => {

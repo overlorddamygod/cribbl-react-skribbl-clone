@@ -128,7 +128,6 @@ const Lobby = (props: any) => {
       })
     );
   };
-  console.log(window.location.hostname);
 
   const removePlayer = (playerId: string) => {
     console.log("Player removed");

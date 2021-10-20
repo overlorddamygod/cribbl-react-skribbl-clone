@@ -73,6 +73,16 @@ export class GameService {
       client.emit('game:404');
     }
   }
+  fill(gameId: any, client: Socket, data: any) {
+    const game = this.getGame(gameId);
+
+    if (game) {
+      game.fill(data, client);
+    } else {
+      console.error('No game');
+      client.emit('game:404');
+    }
+  }
   clearCanvas(gameId: string) {
     const game = this.getGame(gameId);
 
