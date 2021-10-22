@@ -38,6 +38,10 @@ export class GameService {
     };
   }
 
+  getAllGames(): any {
+    return Object.values(this.games).map((game) => game.getDetails());
+  }
+
   joinGame(
     gameId: string,
     client: Socket,
@@ -57,12 +61,30 @@ export class GameService {
     const game = this.playerToGame(playerId);
 
     if (game) {
-      game.removePlayer(playerId);
+      const deleteGame = game.removePlayer(playerId);
+      if (deleteGame) {
+        delete this.games[game.roomId];
+      }
       delete this.playerToGameId[playerId];
     } else {
       console.error('No game');
     }
   }
+
+  kickPlayer(gameId, playerId: string, toBeKickedId: string) {
+    const game = this.getGame(gameId);
+
+    if (game) {
+      const deleteGame = game.kickPlayer(playerId, toBeKickedId);
+      if (deleteGame) {
+        delete this.games[game.roomId];
+      }
+      delete this.playerToGameId[playerId];
+    } else {
+      console.error('No game');
+    }
+  }
+
   drawing(gameId: any, client: Socket, data: any) {
     const game = this.getGame(gameId);
 

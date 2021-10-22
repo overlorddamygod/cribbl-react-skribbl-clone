@@ -15,8 +15,12 @@ export class GameController {
     return this.gameService.getGameDetails(gameId);
   }
 
-  @Get('/')
+  @Get('/find')
   getRandomGame() {
     return this.gameService.getRandomGame();
+  }
+  @Get('/')
+  getAllGames() {
+    return this.gameService.getAllGames();
   }
 }

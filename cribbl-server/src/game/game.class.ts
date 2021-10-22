@@ -21,7 +21,7 @@ enum Screen {
 
 class Game {
   io: Server;
-  roomId: string;
+  public roomId: string;
   creator: string;
   players: Player[];
   turnOf: Player;
@@ -52,6 +52,10 @@ class Game {
     this.correctWord = '';
     this.hint = '';
     this.time = null;
+    this.turnOf = {
+      id: '1',
+      username: '3',
+    };
     // this.creator = creator;
     // this.timeLimit = TimeLimit
     // this.totalRounds = 3
@@ -88,10 +92,12 @@ class Game {
           };
         });
 
-        const unguessed = this.players.filter(
-          (player) =>
-            player.id != this.getTurnPlayer().id && player.guessed == false,
-        );
+        const unguessed = this.players.filter((player) => {
+          return (
+            player.id != this.getTurnPlayer().id && player.guessed == false
+          );
+        });
+        console.log('UNGUESSED', unguessed);
 
         if (unguessed.length == 0) {
           this.log('Everyone Guessed the word');
@@ -113,6 +119,7 @@ class Game {
 
   getDetails() {
     return {
+      id: this.roomId,
       rounds: this.rounds,
       drawTime: this.drawTime,
       customWords: this.customWords,
@@ -133,7 +140,7 @@ class Game {
     client.join(this.roomId);
     this.log(`Player joined ${player.username} (${player.id})`);
 
-    // player.guessed = false;
+    player.guessed = false;
     player.points = 0;
     player.rank = 1;
     if (this.players.length == 0) {
@@ -154,25 +161,34 @@ class Game {
   }
 
   removePlayer(playerId: string) {
-    // player.guessed = false;
-    // player.points = 0;
-    // console.log(player);
-    const player = this.players.find((player) => player.id == playerId);
+    const playerIndex = this.players.findIndex(
+      (player) => player.id == playerId,
+    );
+    if (playerIndex < 0) return;
+    const player = this.players[playerIndex];
+
     this.players = this.players.filter((player) => player.id != playerId);
 
     if (player.id == this.creator) {
       if (this.players.length > 0) {
-        console.log('SET CREQATOR');
+        console.log('SET CREATOR');
         this.setCreator(this.players[0].id);
       }
     }
 
-    if (player.id == this.turnOf.id) {
-      this.handleTurnEnd();
+    if (this.turnOf) {
+      if (player.id == this.turnOf.id && this.players.length > 0) {
+        this.handleTurnEnd();
+      }
+    }
+
+    if (playerIndex < this.turnIndex) {
+      this.turnIndex = Math.max(0, this.turnIndex - 1);
     }
 
     this.log(`${playerId} closed the game`);
     this.io.in(this.roomId).emit('game:disconnected', playerId);
+    return this.players.length == 0;
   }
 
   setRounds(rounds: number) {
@@ -217,6 +233,10 @@ class Game {
   }
 
   startGame() {
+    if (this.players.length < 2) {
+      this.log('Not enough players');
+      return;
+    }
     this.log(`Game Started`);
     // this.changeTurn()
     this.screen = Screen.game;
@@ -266,7 +286,7 @@ class Game {
       client.emit('game:word', this.correctWord);
       this.startTurn();
     } else {
-      this.log('Not authorized');
+      this.log('Not authorized - setWord');
     }
   }
 
@@ -295,6 +315,7 @@ class Game {
 
   handleTurnEnd() {
     setTimeout(() => {
+      if (this.players.length == 0) return;
       this.emit('game:hideScoreboard', '');
       this.log('hide');
 
@@ -305,7 +326,9 @@ class Game {
         if (this.roundDone == this.rounds) {
           // All round over
           this.log('GAME FINISHED');
-          this.emit('game:allRoundsFinished', '');
+          setTimeout(() => {
+            this.emit('game:allRoundsFinished', '');
+          }, 2000);
         } else {
           // Start next round
           this.startRound();
@@ -352,6 +375,16 @@ class Game {
     // check if votes are majority
     // kick the player
     // change turn
+  }
+
+  kickPlayer(playerId, toBeKickedId) {
+    if (playerId != this.creator) {
+      this.log('Not authorized - kickPlayer');
+    }
+    this.log(`${playerId} kicked ${toBeKickedId}`);
+    this.io.to(toBeKickedId).emit('game:kicked', '');
+    // this.emit('game:kick', toBeKickedId);
+    return this.removePlayer(toBeKickedId);
   }
 }
 
