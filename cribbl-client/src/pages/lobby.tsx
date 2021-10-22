@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Link, useHistory, useLocation, useParams } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
 import { DefaultEventsMap } from "socket.io-client/build/typed-events";
@@ -172,6 +172,13 @@ const Lobby = (props: any) => {
     dispatch(showGame());
   };
 
+  const isCreator = useMemo(
+    () => {
+      return state.creator === profile.id;
+    },
+    [state.creator, profile.id],
+  );
+
   if (state.screen == Screen.lobby)
     return (
       <div className="h-full">
@@ -185,7 +192,9 @@ const Lobby = (props: any) => {
                 <SelectInput
                   title="Rounds"
                   value={state.rounds}
+                  disabled={!isCreator}
                   onValueChange={(val) => {
+                    if (!isCreator) return
                     setRounds(val);
                   }}
                   options={[2, 3, 4, 5, 6]}
@@ -193,7 +202,10 @@ const Lobby = (props: any) => {
                 <SelectInput
                   title="Draw time in seconds"
                   value={state.drawTime}
+                  disabled={!isCreator}
                   onValueChange={(val) => {
+                    if (!isCreator) return
+
                     setDrawTime(val);
                   }}
                   options={Array.from({ length: 16 }, (v, i) => i * 10 + 30)}
@@ -201,14 +213,17 @@ const Lobby = (props: any) => {
                 <Label title="Custom Words" />
                 <textarea
                   value={state.customWords}
+                  disabled={!isCreator}
                   className="w-full rounded px-3 py-1 border border-gray-400 mb-3"
                   placeholder="Type your custom words here separated by comma."
                   onChange={(e) => {
+                    if (!isCreator) return
                     setCustomWords(e.target.value);
                   }}
                 />
                 <button
-                  className="block bg-green-500 hover:bg-green-600 w-full text-white rounded h-10"
+                  disabled={!isCreator}
+                  className="block bg-green-500 hover:bg-green-600 disabled:opacity-50 w-full text-white rounded h-10"
                   onClick={startGame}
                 >
                   Start Game
@@ -292,6 +307,7 @@ type SelectInputProps = {
   title: string;
   value: number;
   options: Array<number>;
+  disabled?: boolean;
   onValueChange: (val: number) => void;
 };
 
@@ -299,6 +315,7 @@ const SelectInput = ({
   title,
   value,
   options,
+  disabled = false,
   onValueChange,
 }: SelectInputProps) => {
   return (
@@ -306,6 +323,7 @@ const SelectInput = ({
       <Label title={title} />
       <select
         value={value}
+        disabled={disabled}
         className="w-full rounded px-3 py-1 border border-gray-400 mb-3"
         onChange={(e) => onValueChange(+e.target.value)}
       >

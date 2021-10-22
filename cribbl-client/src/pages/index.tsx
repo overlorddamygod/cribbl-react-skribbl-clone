@@ -79,7 +79,7 @@ const Index = () => {
   };
 
   return (
-    <div className="h-full flex justify-center items-center">
+    <div className="h-full dead-center">
       <div className="bg-white p-3 rounded md:w-1/4">
         <input
           className="border border-gray-400 rounded w-full px-3 py-1"

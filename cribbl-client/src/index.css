@@ -15,6 +15,17 @@ body {
   background-color: #234b97;
 }
 
+.tooltip {
+  @apply invisible absolute;
+}
+
+.has-tooltip:hover .tooltip {
+  @apply visible z-50;
+}
+
+.dead-center {
+  @apply flex justify-center items-center;
+}
 #root {
   height: 100%;
 }

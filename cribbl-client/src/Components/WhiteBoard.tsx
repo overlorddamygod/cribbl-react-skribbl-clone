@@ -1,6 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
+import Pen from "../assets/img/pen.gif";
+import Eraser from "../assets/img/rubber.gif";
+import Fill from "../assets/img/filltool.gif";
+import Clear from "../assets/img/clear.gif";
+import Box from "./Box";
+import ToolTipBox from "./ToolTipBox";
 
 type MouseEventHandler = React.MouseEventHandler<HTMLCanvasElement> | undefined;
+
+const canvasWidth = 800;
+const canvasHeight = 600;
 
 const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -52,7 +61,7 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
   const clearCanvas = (emit = true) => {
     const ctx = canvasRef.current!.getContext("2d")!;
     ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, 700, 500);
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
     if (emit) io.emit("game:clear", gameId);
   };
 
@@ -183,8 +192,8 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
       const imageData = ctx.getImageData(
         0,
         0,
-        canvasRef.current?.width || 700,
-        canvasRef.current?.height || 500
+        canvasRef.current?.width || canvasWidth,
+        canvasRef.current?.height || canvasHeight
       );
 
       const col = hexToRGB(color);
@@ -199,21 +208,21 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
       <div
         className="relative"
         style={{
-          width: 700,
-          height: 500,
+          width: canvasWidth,
+          height: canvasHeight,
         }}
       >
         <canvas
           ref={canvasRef}
-          width="700"
-          height="500"
+          width={canvasWidth}
+          height={canvasHeight}
           onClick={onClick}
           onMouseUp={onMouseUp}
           onMouseMove={onMouseMove}
           onMouseDown={onMouseDown}
         ></canvas>
         {canvasState.showWordsBox && (
-          <div className="h-full w-full flex justify-center items-center absolute top-0 left-0 bg-black opacity-80">
+          <div className="h-full w-full dead-center absolute top-0 left-0 bg-black opacity-80">
             <div className="w-4/12 flex justify-between items-center">
               {words.map((word) => {
                 return (
@@ -228,18 +237,21 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
       </div>
       {canvasState.canDraw && (
         <div className="flex my-3">
+          <ToolTipBox name="Color preview">
           <div
-            className="w-10 h-10 mr-2"
+            className="w-12 h-12 mr-2"
             style={{
               backgroundColor: canvasState.current.color,
             }}
           ></div>
+          </ToolTipBox>
+          <ToolTipBox name="Select a color">
 
           <div className="grid grid-cols-12">
             {colors.map((color) => {
               return (
                 <div
-                  className="w-5 h-5"
+                  className="w-6 h-6 border-black hover:border-2 cursor-pointer"
                   key={color}
                   onClick={() =>
                     setCanvasState({
@@ -257,73 +269,90 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
               );
             })}
           </div>
-          <div className="flex">
-            <div
-              className={`w-10 h-10 bg-white`}
-              onClick={() =>
-                setCanvasState({
-                  ...canvasState,
-                  mode: "pencil",
-                })
-              }
-            >
-              P
-            </div>
-            <div
-              className="w-10 h-10 bg-white"
-              style={{
-                background: "",
-              }}
-              onClick={() =>
-                setCanvasState({
-                  ...canvasState,
-                  mode: "eraser",
-                  current: {
-                    ...canvasState.current,
-                    color: "#fff",
-                  },
-                })
-              }
-            >
-              E
-            </div>
-            <div
-              className="w-10 h-10 bg-white"
-              style={{
-                background: "",
-              }}
-              onClick={() =>
-                setCanvasState({
-                  ...canvasState,
-                  mode: "fill",
-                })
-              }
-            >
-              F
-            </div>
-          </div>
-          <div className="flex">
-            {[1, 2, 5, 8].map((stroke) => (
-              <div
-                key={stroke}
-                className={`w-10 h-10 bg-white`}
+          </ToolTipBox>
+          <div className="flex mx-1">
+            <ToolTipBox name={"Brush"}>
+              <Box
                 onClick={() =>
                   setCanvasState({
                     ...canvasState,
+                    mode: "brush",
+                  })
+                }
+                selected={canvasState.mode == "brush"}
+              >
+                <img src={Pen} />
+              </Box>
+            </ToolTipBox>
+
+            <ToolTipBox name={"Eraser"}>
+              <Box
+                onClick={() =>
+                  setCanvasState({
+                    ...canvasState,
+                    mode: "eraser",
                     current: {
                       ...canvasState.current,
-                      width: stroke,
+                      color: "#fff",
                     },
                   })
                 }
+                selected={canvasState.mode == "eraser"}
               >
-                {stroke}
-              </div>
-            ))}
-            <div className={`w-10 h-10 bg-white`} onClick={clearCanvas}>
-              Clear
-            </div>
+                <img src={Eraser} />
+              </Box>
+            </ToolTipBox>
+            <ToolTipBox name={"Fill"}>
+              <Box
+                onClick={() =>
+                  setCanvasState({
+                    ...canvasState,
+                    mode: "fill",
+                  })
+                }
+                selected={canvasState.mode == "fill"}
+              >
+                <img src={Fill} />
+              </Box>
+            </ToolTipBox>
           </div>
+          <ToolTipBox name={"Set brush size"}>
+            <div className="flex">
+              {[1, 2, 5, 8].map((stroke) => (
+                <Box
+                  key={stroke}
+                  selected={canvasState.current.width == stroke}
+                  onClick={() =>
+                    setCanvasState({
+                      ...canvasState,
+                      current: {
+                        ...canvasState.current,
+                        width: stroke,
+                      },
+                    })
+                  }
+                >
+                  <svg height="30" width="30">
+                    <circle
+                      cx="15"
+                      cy="15"
+                      r={stroke * 1.5}
+                      stroke="black"
+                      fill="black"
+                    />
+                  </svg>
+                </Box>
+              ))}
+            </div>
+          </ToolTipBox>
+          <ToolTipBox name="Clear the board">
+            <div
+              className={`w-12 h-12 dead-center cursor-pointer`}
+              onClick={clearCanvas}
+            >
+              <img src={Clear} />
+            </div>
+          </ToolTipBox>
         </div>
       )}
     </div>

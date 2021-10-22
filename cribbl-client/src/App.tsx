@@ -19,7 +19,7 @@ const App = () => {
   }, []);
 
   return (
-    <div className="h-full w-11/12 m-auto">
+    <div className="h-full w-[95%] m-auto">
       <Router>
         <Switch>
           <Route path="/lobby/:gameId">

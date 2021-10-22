@@ -1,57 +1,13 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, {  useState } from "react";
 import Header from "../Components/Header";
 import WhiteBoard from "../Components/WhiteBoard";
-import io, { Socket } from "socket.io-client";
-// import { io } from "socket.io-client";
-import { DefaultEventsMap } from "socket.io-client/build/typed-events";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import Avatar from "../Components/Avatar";
 
 const Game = ({ io, gameId }: { io: any; gameId: string }) => {
   const state = useAppSelector((state) => state.game);
-  const dispatch = useAppDispatch();
-  const players = [
-    {
-      id: 1,
-      username: "Overlord",
-      img: "https://avatars.dicebear.com/api/male/lol.svg",
-      position: 1,
-      points: 30,
-    },
-    {
-      id: 2,
-      username: "Daimyo",
-      img: "https://avatars.dicebear.com/api/bottts/sad.svg",
-      position: 2,
-      points: 69,
-    },
-  ];
 
-  const messages = [
-    {
-      username: "Overlord",
-      message: "Overlord: lol",
-      type: "normal",
-    },
-    {
-      username: "Daimyo",
-      message: "Daimyo joined.",
-      type: "joined",
-    },
-    {
-      username: "Overlord guessed the word",
-      message: "Overlord guessed the word",
-      type: "guessed",
-    },
-  ];
   const [message, setMessage] = useState("");
-
-  const [socket, setSocket] =
-    useState<Socket<DefaultEventsMap, DefaultEventsMap>>();
-
-  useEffect(() => {
-    return () => {};
-  }, []);
 
   const sendMessage = () => {
     io.emit("game:sendMessage", {
@@ -72,7 +28,7 @@ const Game = ({ io, gameId }: { io: any; gameId: string }) => {
         <div className="text-center flex-1">_ _ _ _ _ _ _ _</div>
       </div>
       <div className="flex justify-between">
-        <div className="w-56 rounded">
+        <div className="w-56 min-w-[224px] rounded">
           {state.players.map((player) => {
             return (
               <div
@@ -93,17 +49,9 @@ const Game = ({ io, gameId }: { io: any; gameId: string }) => {
           })}
         </div>
         <div className="mx-2 flex-1">
-          <WhiteBoard io={io} gameId={gameId} />
-          {/* <canvas
-            ref={canvasRef}
-            width="700"
-            height="500"
-            onMouseUp={onMouseUp}
-            onMouseMove={onMouseMove}
-            onMouseDown={onMouseDown}
-          ></canvas> */}
+          <WhiteBoard io={io} gameId={gameId} />     
         </div>
-        <div className="flex flex-col bg-yellow-50 px-2 w-72">
+        <div className="flex flex-col bg-yellow-50 px-2 w-80 min-w-[320px]">
           <div className="flex-1 flex flex-col justify-end">
             {state.messages.map((msg) => {
               const { type, message } = msg;
