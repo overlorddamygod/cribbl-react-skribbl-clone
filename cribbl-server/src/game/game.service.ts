@@ -101,14 +101,18 @@ export class GameService {
     return game.getDetails();
   }
 
-  sendMessage(gameId: string, id: string, message: string) {
+  sendMessage(gameId: string, id: string, profile: Player, message: string) {
     const game = this.getGame(gameId);
 
     if (game) {
-      game.message({
-        id,
-        message,
-      });
+      game.message(profile, message);
+    }
+  }
+  setWord(gameId: string, client: Socket, word: string) {
+    const game = this.getGame(gameId);
+
+    if (game) {
+      game.setWord(client, word);
     }
   }
 

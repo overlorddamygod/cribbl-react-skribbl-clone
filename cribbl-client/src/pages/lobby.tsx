@@ -23,6 +23,7 @@ import {
   set_initial,
   set_creator,
   clear_game_state,
+  set_turn,
 } from "../store/game/gameSlice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { set_id } from "../store/profile/profileSlice";
@@ -102,6 +103,12 @@ const Lobby = (props: any) => {
     i.on("game:creator", (creatorId) => {
       dispatch(set_creator(creatorId));
     });
+    i.on("game:turn", (turnPlayer) => {
+      dispatch(set_turn(turnPlayer));
+    });
+    i.on("game:allRoundsFinished", () => {
+      dispatch(showLobby());
+    });
     i.on("disconnect", () => {
       // alert("disconnected");
       console.log("DISCONNEDTEDDDDDDD");
@@ -134,7 +141,7 @@ const Lobby = (props: any) => {
     dispatch(remove_player(playerId));
     // dispatch(add_message({
     //   type: "normal",
-    //   message: `${player.username} joined the game.`
+    //   message: `${player.username} left the game.`
     // }));
   };
 
@@ -264,7 +271,7 @@ const Lobby = (props: any) => {
       </div>
     );
   else if (state.screen == Screen.game) {
-    return <Game io={i} gameId={gameId} />;
+    return <Game io={i} gameId={gameId} profile={profile}/>;
   } else {
     return <></>;
   }

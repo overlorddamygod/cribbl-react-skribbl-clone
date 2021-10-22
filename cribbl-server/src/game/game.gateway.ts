@@ -115,7 +115,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: any,
   ): any {
-    const { gameId, id, message } = data;
-    this.gameService.sendMessage(gameId, id, message);
+    const { gameId, profile, message } = data;
+    this.gameService.sendMessage(gameId, client.id, profile, message);
+  }
+
+  @SubscribeMessage('game:setWord')
+  setWord(@ConnectedSocket() client: Socket, @MessageBody() data: any): any {
+    const { gameId, word } = data;
+    this.gameService.setWord(gameId, client, word);
   }
 }

@@ -1,21 +1,29 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Pen from "../assets/img/pen.gif";
 import Eraser from "../assets/img/rubber.gif";
 import Fill from "../assets/img/filltool.gif";
 import Clear from "../assets/img/clear.gif";
 import Box from "./Box";
 import ToolTipBox from "./ToolTipBox";
+import { useDispatch } from "react-redux";
+import { GameState, set_players, set_round, set_turn, set_word } from "../store/game/gameSlice";
+import { useAppSelector } from "../store/hooks";
 
 type MouseEventHandler = React.MouseEventHandler<HTMLCanvasElement> | undefined;
 
 const canvasWidth = 800;
 const canvasHeight = 600;
 
-const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
+const WhiteBoard = ({ io, gameId }: { io: any; gameId: string}) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const state = useAppSelector((state) => state.game);
+  const profile = useAppSelector((state) => state.profile);
+
+  const dispatch = useDispatch();
 
   const [canvasState, setCanvasState] = useState({
     canDraw: true,
+    showRound: false,
     showWordsBox: false,
     showScoreBoard: false,
     drawing: false,
@@ -49,10 +57,60 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
     io.on("game:clear", () => {
       clearCanvas(false);
     });
+    io.on("game:turn", (turnOf: any) => {
+      dispatch(set_turn(turnOf))
+      setCanvasState(prev=> {
+        return {
+          ...prev,
+          showWordsBox: true,
+          showRound: false
+        }
+      })
+    });
 
     io.on("lol", () => {
       console.log("LOLLLLLL");
     });
+    io.on("game:showScoreboard", (data: any) => {
+      console.log("showing scoreboard")
+      dispatch(set_players(data.players))
+      dispatch(set_word(data.word))
+      setCanvasState(prev=> {
+        return {
+          ...prev,
+          showScoreBoard: true,
+        }
+      })
+    });
+    io.on("game:hideScoreboard", () => {
+      console.log("hiding scoreboard")
+
+      setCanvasState(prev=> {
+        return {
+          ...prev,
+          showScoreBoard: false,
+        }
+      })
+    });
+    io.on("game:round", (round: number) => {
+      dispatch(set_round(round));
+        setCanvasState(prev=> {
+          return {
+            ...prev,
+            showRound: true
+          }
+        })
+    });
+
+    io.on("game:word",(word:string)=> {
+        dispatch(set_word(word));
+        setCanvasState(prev=> {
+          return {
+            ...prev,
+            showWordsBox: false,
+          }
+        })
+      })
     return () => {};
   }, []);
 
@@ -66,6 +124,7 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
   };
 
   const onMouseDown: MouseEventHandler = (e) => {
+    if (!isTurn) return
     if (canvasState.mode == "fill") return;
     console.log("DOWN");
 
@@ -84,6 +143,8 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
   };
 
   const onMouseMove: MouseEventHandler = (e) => {
+    if (!isTurn) return
+
     if (!canvasState.drawing || canvasState.mode == "fill") {
       return;
     }
@@ -111,6 +172,8 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
   };
 
   const onMouseUp: MouseEventHandler = (e) => {
+    if (!isTurn) return
+
     if (!canvasState.drawing || canvasState.mode == "fill") {
       return;
     }
@@ -176,6 +239,7 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
   };
 
   const onClick: MouseEventHandler = (e) => {
+    if (!isTurn) return
     if (canvasState.mode == "fill") {
       const x = e.clientX - canvasRef.current!.getBoundingClientRect().x;
       const y = e.clientY - canvasRef.current!.getBoundingClientRect().y;
@@ -203,6 +267,15 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
   };
   const words = ["Wizard", "Hat", "Car"];
 
+  const sendWord = (word: string) => {
+    io.emit("game:setWord", {
+      gameId,
+      word
+    })
+  }
+
+  const isTurn = useMemo(()=>profile.id == state.turn.id,[profile.id, state.turn.id])
+
   return (
     <div className="flex flex-col items-center">
       <div
@@ -223,19 +296,43 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string }) => {
         ></canvas>
         {canvasState.showWordsBox && (
           <div className="h-full w-full dead-center absolute top-0 left-0 bg-black opacity-80">
-            <div className="w-4/12 flex justify-between items-center">
-              {words.map((word) => {
+            <div className="w-4/12 flex justify-between items-center text-white ">
+              {profile.id == state.turn.id ? words.map((word) => {
                 return (
-                  <button className="rounded bg-yellow-500 px-4 py-2">
+                  <button className="rounded bg-yellow-500 px-4 py-2" onClick={()=> {
+                    sendWord(word)
+                  }} key={word}>
                     {word}
                   </button>
                 );
+              }) : <div className="text-xl text-center w-full">{state.turn.username} is choosing a word</div>}
+            </div>
+          </div>
+        )}
+        {canvasState.showRound && (
+          <div className="h-full w-full dead-center absolute top-0 left-0 bg-black opacity-80">
+            <div className="w-4/12 flex justify-between items-center text-white text-xl text-center">
+              <div className="text-xl text-center w-full">Round {state.round}</div>
+            </div>
+          </div>
+        )}
+        {canvasState.showScoreBoard && (
+          <div className="h-full w-full dead-center absolute top-0 left-0 bg-black opacity-80">
+            <div className="w-4/12 flex justify-between items-center text-white">
+              <div>
+              <div className="text-xl text-center">Scoreboard</div>
+              <div>The word was {state.word}</div>
+              {state.players.map(player=> {
+                return <div key={player.id}>
+                  <div>{player.username}: {player.points}</div>
+                </div>
               })}
+              </div>
             </div>
           </div>
         )}
       </div>
-      {canvasState.canDraw && (
+      {profile.id == state.turn.id && (
         <div className="flex my-3">
           <ToolTipBox name="Color preview">
           <div
