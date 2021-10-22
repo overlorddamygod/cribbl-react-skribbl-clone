@@ -87,7 +87,13 @@ const Lobby = (props: any) => {
       // alert("Game doesn't exist");
       history.push("/");
     });
-    i.on("game:started", () => startGame(false));
+    i.on("game:kicked", () => {
+      alert("You have been kicked");
+      history.push("/");
+    });
+    i.on("game:started", () => {
+      dispatch(showGame());
+    });
     i.on("game:message", (msg) => {
       dispatch(add_message(msg));
     });
@@ -171,12 +177,11 @@ const Lobby = (props: any) => {
       });
   };
 
-  const startGame = (emit = true) => {
-    if (emit)
-      i!.emit(`game:start`, {
-        id: gameId,
-      });
-    dispatch(showGame());
+  const startGame = () => {
+    if (state.players.length < 2) return;
+    i!.emit(`game:start`, {
+      id: gameId,
+    });
   };
 
   const isCreator = useMemo(
@@ -247,7 +252,14 @@ const Lobby = (props: any) => {
                     className="flex flex-col text-white text-sm text-center cursor-pointer"
                     key={player.id}
                   >
-                    <Avatar seed={player.username} alt={player.id} />
+                    <div onClick={()=>{
+                      if(!isCreator || player.id === profile.id) return
+                      i!.emit(`game:kickPlayer`, {
+                        gameId,
+                        playerId: profile.id,
+                        toBeKickedId: player.id
+                      });
+                    }}><Avatar seed={player.username} alt={player.id}/></div>
 
                     <div className="mt-2 sm:text-sm md:text-xl">
                       {player.username}

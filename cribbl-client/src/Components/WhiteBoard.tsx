@@ -37,7 +37,7 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string}) => {
       x: 1,
       y: 1,
     },
-    mode: "pencil",
+    mode: "brush",
   });
 
   useEffect(() => {

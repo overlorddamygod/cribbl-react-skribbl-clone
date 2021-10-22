@@ -36,7 +36,7 @@ const Index = () => {
     } else {
       // get games
       try {
-        const res = await axios.get(`${SOCKET_PATH}/game`);
+        const res = await axios.get(`${SOCKET_PATH}/game/find`);
 
         type GameRes = {
           gameId: string;
