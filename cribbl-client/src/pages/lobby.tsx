@@ -6,6 +6,7 @@ import { DefaultEventsMap } from "socket.io-client/build/typed-events";
 import Avatar from "../Components/Avatar";
 import Header from "../Components/Header";
 import { CLIENT_PATH, SOCKET_PATH } from "../config";
+import Load from "../assets/img/load.gif";
 
 // import useSocket from "../hooks/socket";
 import {
@@ -47,6 +48,7 @@ const Lobby = (props: any) => {
   const { gameId } = useParams() as { gameId: string };
   const history = useHistory();
   const location = useLocation();
+  const [loading, setLoading] = useState(true);
 
   // const { i, startGame, setRounds, setDrawTime, setCustomWords } =
   //   useSocket(gameId);
@@ -80,11 +82,12 @@ const Lobby = (props: any) => {
     i.on("game:state", (d) => {
       dispatch(set_id(i.id));
       dispatch(set_initial(d));
+      setLoading(false);
       console.log("STATE", d);
     });
     i.on("game:disconnected", removePlayer);
     i.on("game:404", () => {
-      // alert("Game doesn't exist");
+      alert("Game doesn't exist");
       history.push("/");
     });
     i.on("game:kicked", () => {
@@ -184,106 +187,121 @@ const Lobby = (props: any) => {
     });
   };
 
-  const isCreator = useMemo(
-    () => {
-      return state.creator === profile.id;
-    },
-    [state.creator, profile.id],
-  );
+  const isCreator = useMemo(() => {
+    return state.creator === profile.id;
+  }, [state.creator, profile.id]);
+
+  if (loading)
+    return (
+      <div className="h-full dead-center">
+        <img src={Load} alt="Loading" />
+      </div>
+    );
 
   if (state.screen == Screen.lobby)
     return (
       <div className="h-full">
-        <Header />
-        <div className="flex justify-between">
-          <div className="w-1/2 md:w-5/12">
-            <h2 className="text-white text-3xl text-center mb-2">Settings</h2>
-            <div className="bg-white">
-              <h3 className="border-b text-2xl text-center py-1">Lobby</h3>
-              <div className="p-3">
-                <SelectInput
-                  title="Rounds"
-                  value={state.rounds}
-                  disabled={!isCreator}
-                  onValueChange={(val) => {
-                    if (!isCreator) return
-                    setRounds(val);
-                  }}
-                  options={[2, 3, 4, 5, 6]}
-                />
-                <SelectInput
-                  title="Draw time in seconds"
-                  value={state.drawTime}
-                  disabled={!isCreator}
-                  onValueChange={(val) => {
-                    if (!isCreator) return
+            <Header />
+            <div className="flex justify-between">
+              <div className="w-1/2 md:w-5/12">
+                <h2 className="text-white text-3xl text-center mb-2">
+                  Settings
+                </h2>
+                <div className="bg-white">
+                  <h3 className="border-b text-2xl text-center py-1">Lobby</h3>
+                  <div className="p-3">
+                    <SelectInput
+                      title="Rounds"
+                      value={state.rounds}
+                      disabled={!isCreator}
+                      onValueChange={(val) => {
+                        if (!isCreator) return;
+                        setRounds(val);
+                      }}
+                      options={[2, 3, 4, 5, 6]}
+                    />
+                    <SelectInput
+                      title="Draw time in seconds"
+                      value={state.drawTime}
+                      disabled={!isCreator}
+                      onValueChange={(val) => {
+                        if (!isCreator) return;
 
-                    setDrawTime(val);
-                  }}
-                  options={Array.from({ length: 16 }, (v, i) => i * 10 + 30)}
-                />
-                <Label title="Custom Words" />
-                <textarea
-                  value={state.customWords}
-                  disabled={!isCreator}
-                  className="w-full rounded px-3 py-1 border border-gray-400 mb-3"
-                  placeholder="Type your custom words here separated by comma."
-                  onChange={(e) => {
-                    if (!isCreator) return
-                    setCustomWords(e.target.value);
-                  }}
-                />
-                <button
-                  disabled={!isCreator}
-                  className="block bg-green-500 hover:bg-green-600 disabled:opacity-50 w-full text-white rounded h-10"
-                  onClick={startGame}
-                >
-                  Start Game
-                </button>
+                        setDrawTime(val);
+                      }}
+                      options={Array.from(
+                        { length: 16 },
+                        (v, i) => i * 10 + 30
+                      )}
+                    />
+                    <Label title="Custom Words" />
+                    <textarea
+                      value={state.customWords}
+                      disabled={!isCreator}
+                      className="w-full rounded px-3 py-1 border border-gray-400 mb-3"
+                      placeholder="Type your custom words here separated by comma."
+                      onChange={(e) => {
+                        if (!isCreator) return;
+                        setCustomWords(e.target.value);
+                      }}
+                    />
+                    <button
+                      disabled={!isCreator}
+                      className="block bg-green-500 hover:bg-green-600 disabled:opacity-50 w-full text-white rounded h-10"
+                      onClick={startGame}
+                    >
+                      Start Game
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="w-1/2 md:w-5/12">
+                <h2 className="text-white text-3xl text-center mb-2">
+                  Players
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-5">
+                  {state.players.map((player) => {
+                    return (
+                      <div
+                        className="flex flex-col text-white text-sm text-center cursor-pointer"
+                        key={player.id}
+                      >
+                        <div
+                          onClick={() => {
+                            if (!isCreator || player.id === profile.id) return;
+                            i!.emit(`game:kickPlayer`, {
+                              gameId,
+                              playerId: profile.id,
+                              toBeKickedId: player.id,
+                            });
+                          }}
+                        >
+                          <Avatar seed={player.username} alt={player.id} />
+                        </div>
+
+                        <div className="mt-2 sm:text-sm md:text-xl">
+                          {player.username}
+                        </div>
+                        {player.id == profile.id && (
+                          <div className="text-yellow-300">You</div>
+                        )}
+                        {player.id == state.creator && (
+                          <div className="text-yellow-300">Admin</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
-          <div className="w-1/2 md:w-5/12">
-            <h2 className="text-white text-3xl text-center mb-2">Players</h2>
-            <div className="grid grid-cols-2 md:grid-cols-5">
-              {state.players.map((player) => {
-                return (
-                  <div
-                    className="flex flex-col text-white text-sm text-center cursor-pointer"
-                    key={player.id}
-                  >
-                    <div onClick={()=>{
-                      if(!isCreator || player.id === profile.id) return
-                      i!.emit(`game:kickPlayer`, {
-                        gameId,
-                        playerId: profile.id,
-                        toBeKickedId: player.id
-                      });
-                    }}><Avatar seed={player.username} alt={player.id}/></div>
-
-                    <div className="mt-2 sm:text-sm md:text-xl">
-                      {player.username}
-                    </div>
-                    {player.id == profile.id && (
-                      <div className="text-yellow-300">You</div>
-                    )}
-                    {player.id == state.creator && (
-                      <div className="text-yellow-300">Admin</div>
-                    )}
-                  </div>
-                );
-              })}
+            <div className="mt-6 text-center">
+              <h1 className="text-4xl text-white">Invite your friends!</h1>
+              <HoverableDiv link={`${CLIENT_PATH}?id=${gameId}`} />
             </div>
-          </div>
-        </div>
-        <div className="mt-6 text-center">
-          <h1 className="text-4xl text-white">Invite your friends!</h1>
-          <HoverableDiv link={`${CLIENT_PATH}?id=${gameId}`} />
-        </div>
       </div>
     );
   else if (state.screen == Screen.game) {
-    return <Game io={i} gameId={gameId} profile={profile}/>;
+    return <Game io={i} gameId={gameId} profile={profile} />;
   } else {
     return <></>;
   }
