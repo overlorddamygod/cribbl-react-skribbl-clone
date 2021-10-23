@@ -278,7 +278,7 @@ const Lobby = (props: any) => {
         </div>
         <div className="mt-6 text-center">
           <h1 className="text-4xl text-white">Invite your friends!</h1>
-          <HoverableDiv link={`http://localhost:3000?id=${gameId}`} />
+          <HoverableDiv link={`${SOCKET_PATH}?id=${gameId}`} />
         </div>
       </div>
     );
