@@ -6,6 +6,7 @@ import axios from "axios";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { set_username } from "../store/profile/profileSlice";
 import { SOCKET_PATH } from "../config";
+import Load from "../assets/img/load.gif";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -15,6 +16,7 @@ const Index = () => {
   const [avatarSvg, setAvatarSvg] = useState("");
   const username = useAppSelector((state) => state.profile.username);
   const dispatch = useAppDispatch();
+  const [loading, setLoading] = useState(false);
 
   const history = useHistory();
   const query = useQuery();
@@ -30,9 +32,10 @@ const Index = () => {
 
   const playGame = async () => {
     const gameId = query.get("id");
-
+    setLoading(true);
     if (gameId) {
       history.push(`lobby/${gameId}`);
+      setLoading(false);
     } else {
       // get games
       try {
@@ -46,16 +49,21 @@ const Index = () => {
 
         if (data.gameId.length > 0) {
           history.push(`lobby/${data.gameId}`);
+          setLoading(false);
+
         } else {
           createGame();
         }
       } catch (err) {
         console.error(err);
+        setLoading(false);
       }
     }
   };
 
   const createGame = async () => {
+    setLoading(true);
+
     try {
       const res = await axios.post(`${SOCKET_PATH}/game/create`, {
         username,
@@ -73,13 +81,16 @@ const Index = () => {
 
       console.log(res);
       history.push(`lobby/${data.gameId}`);
+      setLoading(false);
     } catch (err) {
       console.error(err);
+      setLoading(false);
     }
   };
 
   return (
     <div className="h-full dead-center">
+      {loading ? <img src={Load} alt="loading" /> : 
       <div className="bg-white p-3 rounded md:w-1/4">
         <input
           className="border border-gray-400 rounded w-full px-3 py-1"
@@ -108,6 +119,7 @@ const Index = () => {
         </button>
         {/* </Link> */}
       </div>
+}
     </div>
   );
 };

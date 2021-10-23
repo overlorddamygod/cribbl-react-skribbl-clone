@@ -5,7 +5,7 @@ import { io, Socket } from "socket.io-client";
 import { DefaultEventsMap } from "socket.io-client/build/typed-events";
 import Avatar from "../Components/Avatar";
 import Header from "../Components/Header";
-import { SOCKET_PATH } from "../config";
+import { CLIENT_PATH, SOCKET_PATH } from "../config";
 
 // import useSocket from "../hooks/socket";
 import {
@@ -278,7 +278,7 @@ const Lobby = (props: any) => {
         </div>
         <div className="mt-6 text-center">
           <h1 className="text-4xl text-white">Invite your friends!</h1>
-          <HoverableDiv link={`${SOCKET_PATH}?id=${gameId}`} />
+          <HoverableDiv link={`${CLIENT_PATH}?id=${gameId}`} />
         </div>
       </div>
     );
