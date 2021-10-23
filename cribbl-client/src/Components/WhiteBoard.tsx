@@ -116,7 +116,7 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string}) => {
 
   console.log("WHITEBOARD");
 
-  const clearCanvas = (emit = true) => {
+  const clearCanvas = (emit: any= true) => {
     const ctx = canvasRef.current!.getContext("2d")!;
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
