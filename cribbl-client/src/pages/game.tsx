@@ -75,7 +75,7 @@ const Game = ({
         </div>
         <div className="text-center flex-1 tracking-[3px]">{state.word}</div>
       </div>
-      <div className="flex justify-between">
+      <div className="flex justify-between h-[600px]">
         <div className="w-56 min-w-[224px] rounded">
           {state.players.map((player) => {
             return (
@@ -101,8 +101,8 @@ const Game = ({
         <div className="mx-2 flex-1">
           <WhiteBoard io={io} gameId={gameId} />
         </div>
-        <div className="flex flex-col bg-yellow-50 px-2 w-80 min-w-[320px]">
-          <div className="flex-1 flex flex-col justify-end">
+        <div className="flex flex-col bg-yellow-50 px-2 w-80 min-w-[320px] h-full">
+          <div className="flex-1 flex flex-col justify-end overflow-auto">
             {state.messages.map((msg) => {
               const { _type, message, username } = msg;
               return (
