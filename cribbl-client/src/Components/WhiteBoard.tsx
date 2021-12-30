@@ -6,7 +6,7 @@ import Clear from "../assets/img/clear.gif";
 import Box from "./Box";
 import ToolTipBox from "./ToolTipBox";
 import { useDispatch } from "react-redux";
-import { GameState, set_players, set_round, set_turn, set_word } from "../store/game/gameSlice";
+import { GameState, set_customWords, set_players, set_round, set_turn, set_word } from "../store/game/gameSlice";
 import { useAppSelector } from "../store/hooks";
 
 type MouseEventHandler = React.MouseEventHandler<HTMLCanvasElement> | undefined;
@@ -67,6 +67,9 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string}) => {
         }
       })
     });
+    io.on("game:setCustomWords", (words: string[]) => {
+      dispatch(set_customWords(words));
+    })
 
     io.on("lol", () => {
       console.log("LOLLLLLL");
@@ -297,7 +300,7 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string}) => {
         {canvasState.showWordsBox && (
           <div className="h-full w-full dead-center absolute top-0 left-0 bg-black opacity-80">
             <div className="w-4/12 flex justify-between items-center text-white ">
-              {profile.id == state.turn.id ? words.map((word) => {
+              {profile.id == state.turn.id ? state.customWords.map((word) => {
                 return (
                   <button className="rounded bg-yellow-500 px-4 py-2" onClick={()=> {
                     sendWord(word)

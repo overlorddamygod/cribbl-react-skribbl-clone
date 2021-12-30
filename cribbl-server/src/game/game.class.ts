@@ -1,4 +1,5 @@
 import { Server, Socket } from 'socket.io';
+import words from "./words";
 
 type Player = {
   id: string;
@@ -29,7 +30,7 @@ class Game {
   roundDone: number;
   drawTime: number;
   turnIndex: number;
-  customWords: string;
+  customWords: string[];
   correctWord: string;
   time: any;
   hint: string;
@@ -44,7 +45,7 @@ class Game {
     this.roomId = roomId;
     this.rounds = 3;
     this.drawTime = 80;
-    this.customWords = '';
+    this.customWords = [];
     this.creator = '';
 
     this.roundDone = 0;
@@ -66,6 +67,7 @@ class Game {
       end: 0,
     };
     this.log(`Game Created`);
+    console.log(this.getDetails());
   }
 
   message(profile: Player, msg: string) {
@@ -191,6 +193,10 @@ class Game {
     return this.players.length == 0;
   }
 
+  getCustomWords() {
+    return [1,2,3].map(word=>words[Math.floor(Math.random() * words.length)]);
+  }
+
   setRounds(rounds: number) {
     this.rounds = rounds;
     this.emit('game:rounds', rounds);
@@ -199,7 +205,7 @@ class Game {
     this.drawTime = drawTime;
     this.emit('game:drawTime', drawTime);
   }
-  setCustomWords(customWords: string) {
+  setCustomWords(customWords: string[]) {
     this.customWords = customWords;
     this.emit('game:customWords', customWords);
   }
@@ -242,7 +248,9 @@ class Game {
     this.screen = Screen.game;
     this.roundDone = 0;
     this.emit('game:started', '');
-    this.startRound();
+    setTimeout(() => {
+      this.startRound();
+    }, 1000);
   }
 
   startRound() {
@@ -260,6 +268,8 @@ class Game {
     const turnOf = this.players[this.turnIndex];
     this.turnOf = turnOf;
     this.log(`${turnOf.username}'s turn to choose word`);
+    this.customWords = this.getCustomWords();
+    this.io.to(turnOf.id).emit("game:setCustomWords", this.customWords);
     this.emit('game:turn', turnOf);
     // wait for some seconds for player to choose word
     // this.setWord("LOL")

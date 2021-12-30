@@ -152,7 +152,7 @@ export class GameService {
       game.setDrawTime(drawTime);
     }
   }
-  setCustomWords(id: string, customWords: string) {
+  setCustomWords(id: string, customWords: string[]) {
     const game = this.getGame(id);
 
     if (game) {

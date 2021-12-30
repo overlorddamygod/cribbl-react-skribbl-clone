@@ -21,7 +21,7 @@ export type GameState = {
   rounds: number;
   round: number;
   drawTime: number;
-  customWords: string;
+  customWords: string[];
   players: Player[];
   messages: {
     _type: string;
@@ -43,7 +43,7 @@ const initialState: GameState = {
   rounds: 3,
   round:1,
   drawTime: 80,
-  customWords: "",
+  customWords: [],
   players: [],
   messages: [],
   creator: "",
@@ -67,13 +67,14 @@ export const gameSlice = createSlice({
       state.screen = Screen.lobby
       state.rounds = 3
       state.drawTime = 80
-      state.customWords = ""
+      state.customWords = []
       state.players = []
       state.messages = []
       state.creator = ""
     },
     set_initial: (state, action) => {
       const { screen, rounds, drawTime, customWords, players, creator, round, turn, word, startEnd} = action.payload;
+      console.log("INITIAL",customWords)
       state.screen = screen;
       state.rounds = rounds;
       state.drawTime = drawTime;
