@@ -134,7 +134,7 @@ export class GameService {
     const game = this.getGame(gameId);
 
     if (game) {
-      game.setWord(client, word);
+      game.setWordFromPlayer(client, word);
     }
   }
 

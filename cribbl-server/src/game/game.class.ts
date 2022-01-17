@@ -32,13 +32,14 @@ class Game {
   turnIndex: number;
   customWords: string[];
   correctWord: string;
-  time: any;
+  time: NodeJS.Timeout;
   hint: string;
   screen: Screen;
   startEnd: {
     start: number;
     end: number;
   };
+  wordSelectionTimeOut: NodeJS.Timeout;
 
   constructor(io: Server, roomId: string) {
     this.io = io;
@@ -194,7 +195,7 @@ class Game {
   }
 
   getCustomWords() {
-    return [1,2,3].map(word=>words[Math.floor(Math.random() * words.length)]);
+    return [1,2,3].map(word=>words[Math.floor(Math.random() * words.length)].toLowerCase());
   }
 
   setRounds(rounds: number) {
@@ -272,6 +273,8 @@ class Game {
     this.io.to(turnOf.id).emit("game:setCustomWords", this.customWords);
     this.emit('game:turn', turnOf);
     // wait for some seconds for player to choose word
+
+    this.wordSelectionTimeOut = setTimeout(this.setRandomWordFromServer.bind(this), 10000);
     // this.setWord("LOL")
   }
 
@@ -284,17 +287,34 @@ class Game {
     };
   }
 
-  setWord(client: Socket, word: string) {
+  setCorrectWord(word, cb) {
+    this.correctWord = word;
+    this.log(`${word} selected`);
+    this.hint = this.correctWord
+      .split('')
+      .map((w) => '_')
+      .join('');
+    cb();
+    this.startTurn();
+  }
+
+  setRandomWordFromServer() {
+    if ( this.correctWord ) return;
+    const randomWord = this.customWords[Math.floor(Math.random() * this.customWords.length)].toLowerCase()
+    this.setCorrectWord(randomWord, () => {
+      this.io.in(this.roomId).to(this.turnOf.id).emit('game:word', this.correctWord);
+      this.io.in(this.roomId).except(this.turnOf.id).emit('game:word', this.hint);
+    });
+  }
+
+  setWordFromPlayer(client: Socket, word: string) {
     if (client.id == this.getTurnPlayer().id) {
-      this.correctWord = word;
-      this.log(`${word} selected`);
-      this.hint = this.correctWord
-        .split('')
-        .map((w) => '_')
-        .join('');
-      client.broadcast.in(this.roomId).emit('game:word', this.hint);
-      client.emit('game:word', this.correctWord);
       this.startTurn();
+      this.setCorrectWord(word, () => {
+        client.broadcast.in(this.roomId).emit('game:word', this.hint);
+        client.emit('game:word', this.correctWord);
+      });
+      clearTimeout(this.wordSelectionTimeOut);
     } else {
       this.log('Not authorized - setWord');
     }
@@ -320,6 +340,7 @@ class Game {
       word: this.correctWord,
       players: this.players,
     });
+    this.correctWord = '';
     this.handleTurnEnd();
   }
 
