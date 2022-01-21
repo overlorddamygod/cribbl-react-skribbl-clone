@@ -189,8 +189,9 @@ class Game {
       this.turnIndex = Math.max(0, this.turnIndex - 1);
     }
 
-    this.log(`${playerId} closed the game`);
-    this.io.in(this.roomId).emit('game:disconnected', playerId);
+    this.log(`${player.username} closed the game`);
+    // this.io.in(this.roomId).emit()
+    this.io.in(this.roomId).emit('game:disconnected', player);
     return this.players.length == 0;
   }
 

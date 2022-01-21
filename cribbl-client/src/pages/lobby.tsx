@@ -139,19 +139,19 @@ const Lobby = (props: any) => {
     dispatch(add_player(player));
     dispatch(
       add_message({
-        type: "normal",
+        type: "join",
         message: `${player.username} joined the game.`,
       })
     );
   };
 
-  const removePlayer = (playerId: string) => {
+  const removePlayer = (player: Player) => {
     console.log("Player removed");
-    dispatch(remove_player(playerId));
-    // dispatch(add_message({
-    //   type: "normal",
-    //   message: `${player.username} left the game.`
-    // }));
+    dispatch(remove_player(player.id));
+    dispatch(add_message({
+      type: "leave",
+      message: `${player.username} left the game.`
+    }));
   };
 
   const setRounds = (val: number, emit = true) => {

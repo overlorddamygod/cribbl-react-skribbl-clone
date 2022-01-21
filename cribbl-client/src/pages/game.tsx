@@ -107,7 +107,7 @@ const Game = ({
               const { _type, message, username } = msg;
               return (
                 <div
-                  className={_type == "normal" ? "" : "text-green-400"}
+                  className={getMessageColor(_type)}
                   key={message}
                 >
                   {_type == "normal" && `${username}: `} {message}
@@ -132,6 +132,21 @@ const Game = ({
       </div>
     </div>
   );
+};
+
+const getMessageColor = (type: string) => {
+  if ( type == "join" ) {
+    return "text-green-400";
+  }
+
+  if ( type == "correct" ) {
+    return "text-green-600";
+  }
+  
+  if ( type == "leave" ) {
+    return "text-red-400";
+  }
+  return ""
 };
 
 export default Game;
