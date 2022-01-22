@@ -4,11 +4,13 @@ import { RootState } from '..';
 export type Profile = {
   id: string;
   username: string;
+  server: string;
 };
 
 const initialState: Profile = {
   id: "",
-  username: ""
+  username: "",
+  server: "",
 }
 
 export const profileSlice = createSlice({
@@ -21,11 +23,14 @@ export const profileSlice = createSlice({
     set_username: (state, action) => {
         state.username = action.payload;
         localStorage.setItem("username", state.username);
+    },
+    set_server: (state, action) => {
+        state.server = action.payload;
     }
   },
 })
 
-export const { set_id, set_username } = profileSlice.actions
+export const { set_id, set_username, set_server } = profileSlice.actions
 
 export const selectGameState = (state: RootState) => state.game
 

@@ -3,6 +3,8 @@ import Game from './game.class';
 import { GameGateway } from './game.gateway';
 import { Player } from './game.class';
 import { Socket } from 'socket.io';
+import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 
 @Injectable()
 export class GameService {
@@ -15,7 +17,7 @@ export class GameService {
   constructor(private readonly gameGateway: GameGateway) {}
 
   createGame() {
-    const gameId = `${Object.keys(this.games).length}`;
+    const gameId = uuidv4();
     const game = new Game(this.gameGateway.server, gameId);
 
     this.games[gameId] = game;
@@ -64,6 +66,7 @@ export class GameService {
       const deleteGame = game.removePlayer(playerId);
       if (deleteGame) {
         delete this.games[game.roomId];
+        axios.get('http://localhost:8000/api/game/delete?gameId=' + game.roomId);
       }
       delete this.playerToGameId[playerId];
     } else {

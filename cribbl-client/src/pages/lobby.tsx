@@ -27,7 +27,7 @@ import {
   set_turn,
 } from "../store/game/gameSlice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { set_id } from "../store/profile/profileSlice";
+import { set_id, set_server } from "../store/profile/profileSlice";
 import Game from "./game";
 
 type Player = {
@@ -45,7 +45,7 @@ type Player = {
 const Lobby = (props: any) => {
   const profile = useAppSelector((state) => state.profile);
   const state = useAppSelector((state) => state.game);
-  const { gameId } = useParams() as { gameId: string };
+  const { gameId, server } = useParams() as { gameId: string, server: string };
   const history = useHistory();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
@@ -66,7 +66,11 @@ const Lobby = (props: any) => {
   useEffect(() => {
     // const gameId = location;
     if (gameId) {
-      const _i = io(SOCKET_PATH, {
+      if ( profile.server.length === 0) {
+        history.push("/")
+      }
+      console.log("LOL",profile.server)
+      const _i = io(profile.server, {
         transports: ["websocket"],
       });
       // getDetails();
@@ -296,7 +300,7 @@ const Lobby = (props: any) => {
             </div>
             <div className="mt-6 text-center">
               <h1 className="text-4xl text-white">Invite your friends!</h1>
-              <HoverableDiv link={`${CLIENT_PATH}?id=${gameId}`} />
+              <HoverableDiv link={`${CLIENT_PATH}?id=${gameId}?server=${profile.server}`} />
             </div>
       </div>
     );

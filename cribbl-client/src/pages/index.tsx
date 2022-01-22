@@ -4,8 +4,8 @@ import { createAvatar } from "@dicebear/avatars";
 import { Link, useHistory, useLocation } from "react-router-dom";
 import axios from "axios";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { set_username } from "../store/profile/profileSlice";
-import { SOCKET_PATH } from "../config";
+import { set_username, set_server } from "../store/profile/profileSlice";
+import { GATEWAY_PATH } from "../config";
 import Load from "../assets/img/load.gif";
 
 function useQuery() {
@@ -32,29 +32,40 @@ const Index = () => {
 
   const playGame = async () => {
     const gameId = query.get("id");
+    const server = query.get("server");
+
     setLoading(true);
-    if (gameId) {
+    if (gameId && server) {
+      dispatch(set_server(server));
       history.push(`lobby/${gameId}`);
       setLoading(false);
     } else {
       // get games
       try {
-        const res = await axios.get(`${SOCKET_PATH}/game/find`);
+        const res = await axios.get(`${GATEWAY_PATH}/api/game/find`);
 
         type GameRes = {
           gameId: string;
+          server: string
         };
 
         const data = res.data as GameRes;
+        console.log(data)
 
         if (data.gameId.length > 0) {
+          dispatch(set_server(data.server));
+
           history.push(`lobby/${data.gameId}`);
+      
           setLoading(false);
 
         } else {
           createGame();
         }
       } catch (err) {
+        console.log("HERE")
+        createGame();
+
         console.error(err);
         setLoading(false);
       }
@@ -65,7 +76,7 @@ const Index = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post(`${SOCKET_PATH}/game/create`, {
+      const res = await axios.post(`${GATEWAY_PATH}/api/game/create`, {
         username,
       });
 
@@ -75,11 +86,13 @@ const Index = () => {
           id: string;
           username: string;
         };
+        server: string;
       };
 
       const data = res.data as CreateGameRes;
 
       console.log(res);
+      dispatch(set_server(data.server));
       history.push(`lobby/${data.gameId}`);
       setLoading(false);
     } catch (err) {
