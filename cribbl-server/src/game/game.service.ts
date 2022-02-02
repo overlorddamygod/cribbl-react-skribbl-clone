@@ -1,16 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import Game from './game.class';
 import { GameGateway } from './game.gateway';
 import { Player } from './game.class';
 import { Socket } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class GameService {
   private games: {
     [key: string]: Game;
   } = {};
+  private readonly logger = new Logger(GameService.name);
 
   private playerToGameId: { [key: string]: string } = {};
 
@@ -64,10 +66,10 @@ export class GameService {
 
     if (game) {
       const deleteGame = game.removePlayer(playerId);
-      if (deleteGame) {
-        delete this.games[game.roomId];
-        axios.get('http://localhost:8000/api/game/delete?gameId=' + game.roomId);
-      }
+      // if (deleteGame) {
+      //   delete this.games[game.roomId];
+      //   axios.get('http://localhost:8000/api/game/delete?gameId=' + game.roomId);
+      // }
       delete this.playerToGameId[playerId];
     } else {
       console.error('No game');
@@ -79,9 +81,9 @@ export class GameService {
 
     if (game) {
       const deleteGame = game.kickPlayer(playerId, toBeKickedId);
-      if (deleteGame) {
-        delete this.games[game.roomId];
-      }
+      // if (deleteGame) {
+      //   delete this.games[game.roomId];
+      // }
       delete this.playerToGameId[playerId];
     } else {
       console.error('No game');
@@ -183,6 +185,21 @@ export class GameService {
     if (playerId in this.playerToGameId)
       return this.getGame(this.playerToGameId[playerId]);
     return null;
+  }
+
+  @Cron('45 * * * * *')
+  handleGameCleanUps() {
+    const gameIds = Object.keys(this.games);
+    this.logger.log(`CLEANING UP: ${gameIds.length} games available`);
+    gameIds.forEach((gameId) => {
+      const game = this.games[gameId];
+      if (game.isFinished()) {
+        delete this.games[gameId];
+        this.logger.log(`Cleaning Game #${gameId}`);
+        axios.get('http://localhost:8000/api/game/delete?gameId=' + gameId);
+      }
+    })
+    this.logger.log(`AFTER CLEAN UP: ${Object.keys(this.games).length} games available`);
   }
 }
 

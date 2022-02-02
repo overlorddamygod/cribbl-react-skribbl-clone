@@ -1,4 +1,4 @@
-package main
+package state
 
 import (
 	"fmt"
@@ -7,12 +7,12 @@ import (
 
 var Servers []string = []string{
 	"http://localhost:3001",
-	"http://localhost:3002",
+	// "http://localhost:3002",
 }
 
-func getRandomServer() string {
+func GetRandomServer() string {
 	randomIndex := rand.Intn(len(Servers))
-    return Servers[randomIndex]
+	return Servers[randomIndex]
 }
 
 type CreateGameResponse struct {

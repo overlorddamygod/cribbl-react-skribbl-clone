@@ -40,6 +40,8 @@ class Game {
     end: number;
   };
   wordSelectionTimeOut: NodeJS.Timeout;
+  lastActiveTime: Date;
+  canvasState: any[];
 
   constructor(io: Server, roomId: string) {
     this.io = io;
@@ -58,10 +60,12 @@ class Game {
       id: '1',
       username: '3',
     };
+    this.lastActiveTime = null;
     // this.creator = creator;
     // this.timeLimit = TimeLimit
     // this.totalRounds = 3
     this.players = [];
+    this.canvasState = [];
     this.screen = Screen.lobby;
     this.startEnd = {
       start: 0,
@@ -125,6 +129,7 @@ class Game {
       id: this.roomId,
       rounds: this.rounds,
       drawTime: this.drawTime,
+      // TODO DONT SEND CUSTOM WORDS
       customWords: this.customWords,
       players: this.players,
       creator: this.creator,
@@ -136,6 +141,7 @@ class Game {
       },
       word: this.hint,
       startEnd: this.startEnd,
+      canvasState: this.canvasState
     };
   }
 
@@ -192,6 +198,9 @@ class Game {
     this.log(`${player.username} closed the game`);
     // this.io.in(this.roomId).emit()
     this.io.in(this.roomId).emit('game:disconnected', player);
+    if ( this.players.length == 0 ) {
+      this.lastActiveTime = new Date();
+    }
     return this.players.length == 0;
   }
 
@@ -224,15 +233,24 @@ class Game {
   // }
 
   drawing(data: any[], client: Socket) {
+    this.canvasState.push({
+      type: 'drawing',
+      data
+    });
     client.broadcast.in(this.roomId).emit('game:draw', data);
   }
   fill(data: any[], client: Socket) {
     this.log(`Fill canvas ${data}`);
+    this.canvasState.push({
+      type: 'fill',
+      data
+    });
     client.broadcast.in(this.roomId).emit('game:fill', data);
   }
 
   clearCanvas() {
     this.log('Clear Canvas');
+    this.canvasState = [];
     this.emit('game:clear', '');
   }
 
@@ -247,7 +265,9 @@ class Game {
     }
     this.log(`Game Started`);
     // this.changeTurn()
+    this.lastActiveTime = null;
     this.screen = Screen.game;
+    this.canvasState = [];
     this.roundDone = 0;
     this.emit('game:started', '');
     setTimeout(() => {
@@ -417,6 +437,17 @@ class Game {
     this.io.to(toBeKickedId).emit('game:kicked', '');
     // this.emit('game:kick', toBeKickedId);
     return this.removePlayer(toBeKickedId);
+  }
+
+  isFinished() {
+    if (this.players.length != 0) return false;
+
+    const now = new Date()
+    const diffNowLast = Math.abs(now.getTime() - this.lastActiveTime.getTime()) / 1000
+
+    const mins = 1 * 60
+    
+    return diffNowLast > mins;
   }
 }
 

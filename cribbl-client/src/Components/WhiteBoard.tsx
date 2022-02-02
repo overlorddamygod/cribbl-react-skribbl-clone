@@ -114,6 +114,18 @@ const WhiteBoard = ({ io, gameId }: { io: any; gameId: string}) => {
           }
         })
       })
+
+      io.on("game:state", ({canvasState}) => {
+        console.log(canvasState)
+        (canvasState || []).forEach(canvas => {
+          const { type,  data } = canvas as {type: string, data: any[]};
+          if ( type === "drawing" ) {
+            drawLine(...data, false);
+          } else if ( type === "fill" ) {
+            fill(...data);
+          }
+        })
+      });
     return () => {};
   }, []);
 

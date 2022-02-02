@@ -1,19 +1,22 @@
-package main
+package handlers
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/overlorddamygod/cribbl-react-skribbl-clone/cmd/game-gateway/state"
 )
 
 func CreateGame(w http.ResponseWriter, req *http.Request) {
 	enableCors(&w)
-	randomServer := getRandomServer();
+
+	randomServer := state.GetRandomServer()
 	fmt.Println(randomServer)
 	if req.Method == "POST" {
-		w.Header().Set("Content-Type", "application/json")	
+		w.Header().Set("Content-Type", "application/json")
 
-		resp, err := http.Post(randomServer + "/game/create", "application/json", req.Body)
+		resp, err := http.Post(randomServer+"/game/create", "application/json", req.Body)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -21,23 +24,23 @@ func CreateGame(w http.ResponseWriter, req *http.Request) {
 		}
 		defer resp.Body.Close()
 
-		createResponse := CreateGameResponse {
+		createResponse := state.CreateGameResponse{
 			randomServer,
 			"",
 		}
 
 		error := json.NewDecoder(resp.Body).Decode(&createResponse)
-		
+
 		if error != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		Games = append(Games, createResponse)
+		state.Games = append(state.Games, createResponse)
 
 		w.WriteHeader(http.StatusCreated)
-		responseJson , err := json.Marshal(createResponse)
-		
+		responseJson, err := json.Marshal(createResponse)
+
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -49,9 +52,9 @@ func CreateGame(w http.ResponseWriter, req *http.Request) {
 func GetAllGames(w http.ResponseWriter, req *http.Request) {
 	enableCors(&w)
 	if req.Method == "GET" {
-		w.Header().Set("Content-Type", "application/json")	
+		w.Header().Set("Content-Type", "application/json")
 
-		responseJson , err := json.Marshal(Games)
+		responseJson, err := json.Marshal(state.Games)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -65,19 +68,19 @@ func GetAllGames(w http.ResponseWriter, req *http.Request) {
 func FindGame(w http.ResponseWriter, req *http.Request) {
 	enableCors(&w)
 	if req.Method == "GET" {
-		w.Header().Set("Content-Type", "application/json")	
-		game, err := GetRandomGame()
+		w.Header().Set("Content-Type", "application/json")
+		game, err := state.GetRandomGame()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		responseJson , jsonError := json.Marshal(game)
+		responseJson, jsonError := json.Marshal(game)
 
 		if jsonError != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		
+
 		w.Write(responseJson)
 	}
 }
@@ -87,9 +90,9 @@ func DeleteGame(w http.ResponseWriter, req *http.Request) {
 	gameId := req.URL.Query().Get("gameId")
 	fmt.Println("DELETE", gameId)
 
-	for i, game := range Games {
+	for i, game := range state.Games {
 		if game.GameId == gameId {
-			Games = append(Games[:i], Games[i+1:]...)
+			state.Games = append(state.Games[:i], state.Games[i+1:]...)
 			break
 		}
 	}
