@@ -1,8 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import Game from './game.class';
 import { GameGateway } from './game.gateway';
 import { Player } from './game.class';
 import { Socket } from 'socket.io';
+import { PrismaService } from 'src/prisma.service';
+function makeid(length) {
+  var result           = '';
+  var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var charactersLength = characters.length;
+  for ( var i = 0; i < length; i++ ) {
+    result += characters.charAt(Math.floor(Math.random() * 
+charactersLength));
+ }
+ return result;
+}
 
 @Injectable()
 export class GameService {
@@ -12,11 +23,15 @@ export class GameService {
 
   private playerToGameId: { [key: string]: string } = {};
 
-  constructor(private readonly gameGateway: GameGateway) {}
+  constructor(
+    readonly gameGateway: GameGateway,
+    private readonly prisma: PrismaService,
+  ) {}
 
   createGame() {
-    const gameId = `${Object.keys(this.games).length}`;
-    const game = new Game(this.gameGateway.server, gameId);
+    // const gameId = `${Object.keys(this.games).length}`;
+    const gameId = makeid(10);
+    const game = new Game(this.gameGateway.server, gameId, this.prisma);
 
     this.games[gameId] = game;
     return {
@@ -45,7 +60,7 @@ export class GameService {
   joinGame(
     gameId: string,
     client: Socket,
-    player: { id: string; username: string },
+    player: { id: string; username: string; user_id: number },
   ) {
     const game = this.getGame(gameId);
     if (game) {

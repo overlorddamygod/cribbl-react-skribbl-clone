@@ -1,5 +1,7 @@
 import { Server, Socket } from 'socket.io';
-import words from "./words";
+import { PrismaService } from 'src/prisma.service';
+import { UserService } from 'src/user.service';
+import words from './words';
 
 type Player = {
   id: string;
@@ -7,6 +9,7 @@ type Player = {
   points?: number;
   rank?: number;
   guessed?: boolean;
+  user_id?: number;
 };
 
 type Message = {
@@ -40,8 +43,10 @@ class Game {
     end: number;
   };
   wordSelectionTimeOut: NodeJS.Timeout;
+  prisma: PrismaService;
 
-  constructor(io: Server, roomId: string) {
+  constructor(io: Server, roomId: string, prisma: PrismaService) {
+    this.prisma = prisma;
     this.io = io;
     this.roomId = roomId;
     this.rounds = 3;
@@ -68,7 +73,27 @@ class Game {
       end: 0,
     };
     this.log(`Game Created`);
-    console.log(this.getDetails());
+
+    try {
+      const a = this.prisma.game
+        .create({
+          data: {
+            id: this.roomId,
+            rounds: this.rounds,
+            drawTime: this.drawTime,
+          },
+        })
+        .then((res) => {
+          console.log(this.getDetails());
+          console.log('REs', res);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+      // console.log("SAS",a)
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   message(profile: Player, msg: string) {
@@ -139,7 +164,7 @@ class Game {
     };
   }
 
-  addPlayer(player: Player, client: Socket, broadcast = true) {
+  async addPlayer(player: Player, client: Socket, broadcast = true) {
     client.join(this.roomId);
     this.log(`Player joined ${player.username} (${player.id})`);
 
@@ -155,6 +180,13 @@ class Game {
       client.broadcast.in(this.roomId).emit('game:joined', player);
       client.emit('game:state', this.getDetails());
     }
+    console.log(player);
+    await this.prisma.userGame.create({
+      data: {
+        gameId: this.roomId,
+        userId: player.user_id,
+      },
+    });
     // console.log(`${player.username} joined roomId : ${this.roomId}`);
   }
 
@@ -196,16 +228,35 @@ class Game {
   }
 
   getCustomWords() {
-    return [1,2,3].map(word=>words[Math.floor(Math.random() * words.length)].toLowerCase());
+    return [1, 2, 3].map((word) =>
+      words[Math.floor(Math.random() * words.length)].toLowerCase(),
+    );
   }
 
-  setRounds(rounds: number) {
+  async setRounds(rounds: number) {
     this.rounds = rounds;
     this.emit('game:rounds', rounds);
+
+    await this.prisma.game.update({
+      where: {
+        id: this.roomId,
+      },
+      data: {
+        rounds: this.rounds,
+      },
+    });
   }
-  setDrawTime(drawTime: number) {
+  async setDrawTime(drawTime: number) {
     this.drawTime = drawTime;
     this.emit('game:drawTime', drawTime);
+    await this.prisma.game.update({
+      where: {
+        id: this.roomId,
+      },
+      data: {
+        drawTime: this.drawTime,
+      },
+    });
   }
   setCustomWords(customWords: string[]) {
     this.customWords = customWords;
@@ -271,11 +322,14 @@ class Game {
     this.turnOf = turnOf;
     this.log(`${turnOf.username}'s turn to choose word`);
     this.customWords = this.getCustomWords();
-    this.io.to(turnOf.id).emit("game:setCustomWords", this.customWords);
+    this.io.to(turnOf.id).emit('game:setCustomWords', this.customWords);
     this.emit('game:turn', turnOf);
     // wait for some seconds for player to choose word
 
-    this.wordSelectionTimeOut = setTimeout(this.setRandomWordFromServer.bind(this), 10000);
+    this.wordSelectionTimeOut = setTimeout(
+      this.setRandomWordFromServer.bind(this),
+      10000,
+    );
     // this.setWord("LOL")
   }
 
@@ -300,11 +354,20 @@ class Game {
   }
 
   setRandomWordFromServer() {
-    if ( this.correctWord ) return;
-    const randomWord = this.customWords[Math.floor(Math.random() * this.customWords.length)].toLowerCase()
+    if (this.correctWord) return;
+    const randomWord =
+      this.customWords[
+        Math.floor(Math.random() * this.customWords.length)
+      ].toLowerCase();
     this.setCorrectWord(randomWord, () => {
-      this.io.in(this.roomId).to(this.turnOf.id).emit('game:word', this.correctWord);
-      this.io.in(this.roomId).except(this.turnOf.id).emit('game:word', this.hint);
+      this.io
+        .in(this.roomId)
+        .to(this.turnOf.id)
+        .emit('game:word', this.correctWord);
+      this.io
+        .in(this.roomId)
+        .except(this.turnOf.id)
+        .emit('game:word', this.hint);
     });
   }
 
@@ -330,23 +393,35 @@ class Game {
     }, this.drawTime * 1000);
   }
 
-  showScoreBoard() {
+  async showScoreBoard() {
     console.log(this.players);
     this.players = this.players.map((player) => ({
       ...player,
       guessed: false,
     }));
+
     this.log('show');
     this.emit('game:showScoreboard', {
       word: this.correctWord,
       players: this.players,
     });
     this.correctWord = '';
+
+    // this.players.forEach(p => {
+    //   await this.prisma.gameScore.create({
+    //     data: {
+    //       gameId: this.roomId,
+    //       userId: p.user_id,
+    //       score: p.points
+    //     }
+    //   })
+    // })
+
     this.handleTurnEnd();
   }
 
   handleTurnEnd() {
-    setTimeout(() => {
+    setTimeout(async () => {
       if (this.players.length == 0) return;
       this.emit('game:hideScoreboard', '');
       this.log('hide');
@@ -355,6 +430,20 @@ class Game {
       if (this.turnIndex < 0) {
         // Round over
         this.roundDone++;
+        if (this.roundDone < this.rounds + 1) {
+          await Promise.all(
+            this.players.map((p) => {
+              return this.prisma.gameScore.create({
+                data: {
+                  gameId: this.roomId,
+                  userId: p.user_id,
+                  round: this.roundDone,
+                  score: p.points,
+                },
+              });
+            }),
+          );
+        }
         if (this.roundDone == this.rounds) {
           // All round over
           this.log('GAME FINISHED');

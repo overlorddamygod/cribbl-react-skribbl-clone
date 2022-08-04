@@ -12,6 +12,7 @@ import {
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Server, Socket } from 'socket.io';
+import { PrismaService } from 'src/prisma.service';
 import { GameService } from './game.service';
 
 @WebSocketGateway({ cors: true })
@@ -47,10 +48,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('game:join')
   join(@ConnectedSocket() client: Socket, @MessageBody() data: any): any {
-    const { id, username } = data;
+    const { id, user_id, username } = data;
     this.gameService.joinGame(id, client, {
       id: client.id,
       username,
+      user_id
     });
     return data;
   }

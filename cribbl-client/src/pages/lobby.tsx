@@ -125,6 +125,7 @@ const Lobby = (props: any) => {
 
     i.emit("game:join", {
       id: gameId,
+      user_id: profile.user_id,
       username: profile.username || localStorage.getItem("username") || "LOL",
     });
 
