@@ -14,23 +14,31 @@ model User {
   id    Int     @default(autoincrement()) @id
   username  String
   password String
+  userGames  UserGame[]
+  gameScores  GameScore[]
 }
 
 model Game {
   id String @id
   rounds Int
   drawTime Int
+  userGames UserGame[]
+  gameScores GameScore[]
 }
 
 model UserGame {
   id Int @default(autoincrement()) @id
+  user    User?    @relation(fields: [userId], references: [id])
   userId Int
+  game    Game?    @relation(fields:[gameId],references: [id])
   gameId String
 }
 
 model GameScore {
   id Int @default(autoincrement()) @id
+  game    Game?    @relation(fields: [gameId], references: [id])
   gameId String
+  user    User?    @relation(fields: [userId], references: [id])
   userId Int
   score Int
   round Int

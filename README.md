@@ -12,6 +12,11 @@
 ### Run Frontend
 ```
 cd cribbl-client
+```
+
+Copy `.env.sample` as `.env` 
+
+```
 npm i
 npm run dev
 ```
@@ -26,7 +31,13 @@ Frontend runs on port 3000
 ### Run Backend
 ```
 cd cribbl-server
+```
+
+Copy `.env.sample` as `.env` 
+
+```
 npm i
+npx prisma migrate dev --name migration1
 npm run start:dev
 ```
 Backend runs on port 3001
