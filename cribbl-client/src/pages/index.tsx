@@ -137,12 +137,12 @@ const Index = () => {
             Play
           </button>
           {/* <Link to="lobby/lol"> */}
-          <button
+          {/* <button
             className="block bg-blue-500 hover:bg-blue-600 w-full text-white rounded h-8"
             onClick={createGame}
           >
             Create Private Room
-          </button>
+          </button> */}
           {/* </Link> */}
         </div>
       )}
