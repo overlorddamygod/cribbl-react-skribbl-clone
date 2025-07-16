@@ -1,4 +1,4 @@
-# [Cribbl - Drawing Game](https://cribbl.vercel.app/)
+# [Cribbl - Drawing Game]()
 
 [Skribbl.io](skribbl.io/) clone with TypeScript <3
 
